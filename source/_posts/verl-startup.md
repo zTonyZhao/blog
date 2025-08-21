@@ -14,15 +14,26 @@ verl 是字节跳动 Seed 团队研发的大模型 RLHF 框架，其单-多控�
 
 <!-- more -->
 
-近期主包有幸参与 verl 框架的维护工作，希望后续能在实验室服务器上进行调试和开发。verl 目前对各种硬件的兼容和适配尚未成熟，我在 RTX 4090 这种非计算卡上进行环境配置时踩了不少坑。这里记录一下环境配置的流程和踩过的坑，希望能帮到大家。
+## 前言
 
-截止发文，verl的最新版本为 v0.4.1。
+近期主包有幸参与 verl 框架的维护工作，希望后续能在实验室服务器上对 multi-turn rollout 相关功能进行调试和二次开发。verl 目前对各种硬件的兼容和适配尚未成熟，我在 RTX 4090 这种非计算卡上进行环境配置时踩了不少坑。这里记录一下环境配置的流程和踩过的坑，希望能帮到大家。
 
-首先需要进行基础 python 环境的配置，安装最新版本 miniconda 即可。verl 要求 python 3.10，在创建虚拟环境时需要对版本号进行指定，即`conda create -n veRL python=3.10`。
+截止发文，verl 的最新版本为 v0.4.1。
 
-创建环境后，在克隆下来的verl仓库根目录运行`pip install -e .[sglang]`安装verl。`.[sglang]` 表示安装包含 sglang 的 verl，`-e` 表示以本地作为依赖代码源，这样直接在仓库内修改代码可直观体现在运行过程中。
+{% note primary %}
+**更新**
+发文后不久，我的开发环境版本从 v0.4.1 切换至 v0.5.0（因为其包含自己提交的补丁），整体配置流程并无较大差异，同样需求的朋友们推荐使用 v0.5.0 版本。
+{% endnote %}
 
-如果像我一样后续需要对 SGLang 进行修改，可以安装本地SGLang，先把SGLang的git仓库克隆到本地，随后执行`pip uninstall sglang`卸载默认依赖SGLang，随后前往SGLang本地文件夹，切换至 `v0.4.6.post5` tag 并执行`pip install -e "python[all]"`安装本地版SGLang。
+## 基础环境安装
+
+首先需要进行基础 python 环境的配置，安装最新版本 miniconda 即可。verl 要求 python 3.10，在创建虚拟环境时需要对版本号进行指定，即 `conda create -n veRL python=3.10`。
+
+创建环境后，在克隆下来的verl仓库根目录运行 `pip install -e .[sglang]` 安装 verl。`.[sglang]` 表示安装包含 sglang 的 verl，`-e` 表示以本地作为依赖代码源，这样直接在仓库内修改代码可直观体现在运行过程中。
+
+如果像我一样后续需要对 SGLang 进行修改，可以安装本地 SGLang：先将 SGLang 的 git 仓库克隆到本地，随后执行 `pip uninstall sglang` 卸载默认依赖，随后前往 SGLang 本地文件夹，切换至 `v0.4.6.post5` tag 并执行 `pip install -e "python[all]"` 进行本地安装。
+
+## bugfix: `undefined symbol` @`flash_attn_2_cuda.so`
 
 安装后运行verl，初始化阶段出现报错 `ImportError: /.../flash_attn_2_cuda.so: undefined symbol: _ZN3c105ErrorC2ENS_14Source`。调试发现flash-attn出现问题，直接import即可复现报错。
 
@@ -40,14 +51,32 @@ Traceback (most recent call last):
 ImportError: /home/zhaotianyun/miniconda3/envs/veRL/lib/python3.10/site-packages/flash_attn_2_cuda.cpython-310-x86_64-linux-gnu.so: undefined symbol: _ZN3c105ErrorC2ENS_14SourceLocationENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
 ```
 
-最终定位发现 [flash-attn 2.7.4 预编译二进制包存在 ABI 问题](https://github.com/Dao-AILab/flash-attention/issues/1717)。需要卸载默认安装的 flash-attn，重新安装 abiFALSE 版本。
+最终定位发现 [flash-attn 2.7.4 预编译二进制包存在 ABI 配置错误](https://github.com/Dao-AILab/flash-attention/issues/1717)，默认安装的 `abiTRUE` 版本无法被 python 解释器正常解析。为解决这一问题，需要卸载默认安装的 flash-attn，重新安装 `abiFALSE` 版本。
 
 ```bash
 pip uninstall flash-attn
 pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 ```
 
-重装完毕后，flash-attn 可以被正常导入，verl 可以正常启动并执行初始化，但是[在推理第一个batch时遇到报错](https://github.com/volcengine/verl/issues/1874)
+重装完毕后，flash-attn 可以被正常导入，verl 可以正常启动并执行初始化。
+
+## bugfix: OOM on first step
+
+{% note success %}
+此 bug 已在 v0.5.0 版本中被修复。
+{% endnote %}
+
+在推理第一个 step 时遇到了 [OOM 报错](https://github.com/volcengine/verl/issues/2189)：
+
+```log
+[torch_memory_saver.cpp] CUresult error  result=2 file=csrc/torch_memory_saver.cpp func=cu_mem_create line=104
+```
+
+经调试，发现 resharding 阶段加载内存前程序未能及时清空缓存。通过在适当位置释放缓存的方式可以有效的解决这一问题。补丁已提交 [PR](https://github.com/volcengine/verl/pull/2253) 并被合入。
+
+## bugfix: `peer access is not supported between these two devices`
+
+在推理第一个 step 时遇到了 [SGLang 报错](https://github.com/volcengine/verl/issues/1874)。
 
 ```log
 (TaskRunner pid=610186) Training from scratch
@@ -99,7 +128,9 @@ pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.
 (WorkerDict pid=611035) Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
 ```
 
-后发现是 SGLang 及其底层 pytorch multiprocessing 存在 bug，进行临时修复：
+使用 `torch.multiprocessing` 在多张非计算卡（如 4090）上进行分布式训练，当子进程的 `CUDA_VISIBLE_DEVICES` 与主进程不一致时，待传输张量中记录的 `cuda_device` 在不同进程里指代不同的物理 GPU，而父子进程获取这一向量时都使用 `cuda_device` 直接获取，最终导致程序尝试建立一条并不存在的通道，出现报错。社区曾尝试用 UUID 替换设备编号进行修复，但补丁未能在子进程上正常生效，导致了同样的问题。
+
+我编写了一个临时解决方案，通过修改 SGLang 的部分代码进行修复。方案同步发表在 [issue](https://github.com/volcengine/verl/issues/1874) 中。
 
 ```python
 # sglang/srt/utils.py
@@ -115,7 +146,16 @@ class MultiprocessingSerializer:
         ...
 ```
 
-修复后即可正常运行 multi-turn example。对于 8x4090 48G 的服务器，3B模型会出现OOM的情况，需要修改配置文件使用1.5B模型，具体配置文件如下：
+修复后即可正常运行 multi-turn rollout 示例。
+
+
+## 模型选择
+
+对于 8x4090 48G 的服务器，3B模型会出现OOM的情况，需要修改配置文件使用1.5B模型，更改后的配置文件如下：
+
+{% note danger %}
+本配置文件适用于 v0.5.0。其仅修改了 `actor_rollout_ref.model.path` 与 `trainer.experiment_name`，如使用老版本仅需在对应配置文件中修改这两个参数即可。
+{% endnote %}
 
 ```sh
 # verl/examples/sglang_multiturn/run_qwen2.5-1.5b_gsm8k_multiturn.sh

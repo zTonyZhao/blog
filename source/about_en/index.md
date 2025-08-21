@@ -1,20 +1,23 @@
 ---
-title: 关于
+title: About
 layout: about
 ---
 
 [中文版](/about/)
 
-Tianyun Zhao 赵天韵 is a second-year master's candidate in Computer Technology at Tsinghua Shenzhen International Graduate School, where he is advised by [Prof. Yong Jiang](https://www.sigs.tsinghua.edu.cn/jy/main.htm). His primary research interest lies in efficient scheduling on Reinforcement Learning from Human Feedback (RLHF) training of large language models. He holds a Bachelor of Engineering in Computer Science and Technology from Beijing University of Posts and Telecommunications.
+Tianyun Zhao 赵天韵 is a master's candidate in Computer Technology at Tsinghua Shenzhen International Graduate School, where he is advised by [Prof. Yong Jiang](https://www.sigs.tsinghua.edu.cn/jy/main.htm). His primary research interest lies in efficient scheduling on Reinforcement Learning from Human Feedback (RLHF) training of large language models.
+
+He holds a Bachelor of Engineering in Computer Science and Technology from Beijing University of Posts and Telecommunications.
 
 ## Education
 
-- M.Eng. in Computer Technology, Tsinghua University
-  *Sep.2024 - Jun.2027*
-- B.Mgt. in Information Management and Information Systems, Beijing University of Posts and Telecommunications
-  *Sep.2023 - Jun.2024* {% label danger @Incomplete %}
-- B.Eng. in Computer Science and Technology, Beijing University of Posts and Telecommunications
-  *Sep.2019 - Jun.2023*
+- **M.Eng. in Computer Technology** *Sep.2024 - Jun.2027*
+  @Tsinghua University
+- **B.Mgt. in Information Management and Information Systems** *Sep.2023 - Jun.2024* {% label danger @Incomplete %}
+  @Beijing University of Posts and Telecommunications
+- **B.Eng. in Computer Science and Technology** *Sep.2019 - Jun.2023*
+  @Beijing University of Posts and Telecommunications
+  
 
 ## Publications
 
@@ -41,13 +44,13 @@ Tianyun Zhao 赵天韵 is a second-year master's candidate in Computer Technolog
 
 ## Experience
 
-- **Machine Learning System Research Intern** &emsp; *Jan.2025 – Jul.2025*
-  @Seed Infra, ByteDance
-- **Research Intern** &emsp; *Jun.2024 – Aug.2024*
-  @Network Technology Lab, 2012 Lab, Huawei
-- **Test & Development Intern** &emsp; *Jul.2021 – Dec.2021*
-  @Intelligent Mobility, CSIG, Tencent
-- **Research Intern** &emsp; *Dec.2021 – Feb.2023*
-  @Network Management and Measurement Laboratory, INSC, Tsinghua University
-- **Research Intern** &emsp; *Oct.2019 – Jan.2020*
-  @Wireless Sensing Laboratory, School of Computer Science, Peking University
+- **Machine Learning System Research Intern** *Jan.2025 – Jul.2025*
+  @Seed Infra, **ByteDance**
+- **Research Intern** *Jun.2024 – Aug.2024*
+  @Network Technology Lab, 2012 Lab, **Huawei**
+- **Test & Development Intern** *Jul.2021 – Dec.2021*
+  @Intelligent Mobility, CSIG, **Tencent**
+- **Research Intern** *Dec.2021 – Feb.2023*
+  @Network Management and Measurement Laboratory, INSC, **Tsinghua University**
+- **Research Intern** *Oct.2019 – Jan.2020*
+  @Wireless Sensing Laboratory, School of Computer Science, **Peking University**
